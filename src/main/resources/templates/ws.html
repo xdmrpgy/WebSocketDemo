@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>WebSocket Demo</title>
+</head>
+<body>
+    <!--userId:发送消息人的编号-->
+    <div>默认用户id：plato</div>
+
+    <br/><input id="text" type="text"/>
+    <input placeholder="请输入接收人id" id="sendUserId" />
+    <button onclick="send()">发送消息</button>
+    <br/>
+
+    <button onclick="closeWebSocket()">关闭WebSocket连接</button>
+    <br/>
+    <div id="message"></div>
+</body>
+<script>
+    var websocket = null;
+    var userId = "plato";
+    //判断当前浏览器是否支持WebSocket
+    if ('WebSocket' in window) {
+        websocket = new WebSocket("ws://127.0.0.1:9999/websocket/" + userId);
+    }else {
+        alert('当前浏览器不支持websocket哦！')
+    }
+
+    //将消息显示在网页上
+    function setMessageInnerHTML(sendMessage) {
+        document.getElementById('message').innerHTML += sendMessage + '<br/>';
+    }
+
+    //连接发生错误的回调方法
+    websocket.onerror = function () {
+        setMessageInnerHTML("WebSocket连接发生错误!");
+    }
+
+    //连接成功建立的回调方法
+    websocket.onpen = function () {
+        setMessageInnerHTML("WebSocket连接成功!!");
+    }
+
+    //接收到消息的回调方法
+    websocket.onmessage = function (event) {
+        setMessageInnerHTML(event.data);
+    }
+
+    //连接关闭的回调方法
+    websocket.onclose = function () {
+        setMessageInnerHTML("WebSocket连接关闭！");
+    }
+
+    //监听窗口关闭事件，当窗口关闭时，主动去关闭websocket连接，防止连接还没断开就关闭窗口，server端会抛异常。
+    window.onbeforeunload = function () {
+        closeWebSocket();
+    }
+
+    //关闭WebSocket连接
+    function closeWebSocket() {
+        websocket.close();
+    }
+    
+    //发送消息
+    function send() {
+        var message = document.getElementById("text").value;
+        if (message == '') {
+            alert("发送消息不能为空！");
+            return;
+        }
+        var sendUserId = document.getElementById("sendUserId").value;
+        if (sendUserId == '') {
+            alert("发送用户id不能为空！");
+            return;
+        }
+
+        document.getElementById("message").innerHTML += (userId + "给" + sendUserId + "发送的消息为=====>" + message + "<br/>");
+        message = message + "," + sendUserId;
+        websocket.send(message);
+    }
+</script>
+</html>
